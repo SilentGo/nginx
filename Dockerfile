@@ -3,6 +3,8 @@ FROM alpine
 MAINTAINER liuz "llzmac@163.com"
 
 ENV NGINX_VERSION 1.17.5
+ENV LUAJIT_LIB=/usr/local/luajit/lib
+ENV LUAJIT_INC=/usr/local/luajit/include/luajit-2.1
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && CONFIG="\
@@ -47,9 +49,12 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
         --with-http_v2_module \
         --with-cc-opt='-I/usr/local/include' \
         --with-ld-opt='-L/usr/local/lib' \
+        --with-ld-opt="-Wl,-rpath,/usr/local/luajit/lib" \
         --add-module=/tmp/ngx_http_geoip2_module \
         --add-module=/tmp/nginx-module-vts \
         --add-module=/tmp/nginx_upstream_check_module \
+        --add-module=/tmp/ngx_devel_kit-0.3.1 \
+        --add-module=/tmp/lua-nginx-module-0.10.15 \
     " \
     && apk add --no-cache --virtual .build-deps \
         gcc \
@@ -71,6 +76,9 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
     && curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o /tmp/nginx.tar.gz \
     && curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o /tmp/nginx.tar.gz.asc \
+    && curl -fSL http://luajit.org/download/LuaJIT-2.1.0-beta2.tar.gz  -o /tmp/LuaJIT-2.1.0-beta2.tar.gz \
+    && curl -fSL https://github.com/simpl/ngx_devel_kit/archive/v0.3.1.tar.gz  -o /tmp/v0.3.1.tar.gz \
+    && curl -fSL https://github.com/openresty/lua-nginx-module/archive/v0.10.15.tar.gz  -o /tmp/v0.10.15.tar.gz \
     && git clone --recursive https://github.com/maxmind/libmaxminddb.git /tmp/libmaxminddb \
     && git clone --recursive https://github.com/leev/ngx_http_geoip2_module.git /tmp/ngx_http_geoip2_module \
     && git clone https://github.com/vozlt/nginx-module-vts.git /tmp/nginx-module-vts \
@@ -97,8 +105,11 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && ./configure \
     && make -j$(getconf _NPROCESSORS_ONLN) \
     && make install \
-    && cd /tmp/ \
-    && tar -xf nginx.tar.gz \
+    && cd /tmp && tar -xf LuaJIT-2.1.0-beta2.tar.gz && cd LuaJIT-2.1.0-beta2 \
+    && make PREFIX=/usr/local/luajit && make install PREFIX=/usr/local/luajit \
+    && cd /tmp && tar -xf v0.3.1.tar.gz \
+    && cd /tmp && tar -xf v0.10.15.tar.gz \
+    && cd /tmp && tar -xf nginx.tar.gz \
     && cd /tmp/nginx-$NGINX_VERSION \
     && patch -p1 < /tmp/nginx_upstream_check_module/check_1.16.1+.patch \
     && ./configure $CONFIG \
@@ -113,7 +124,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && apk add --no-cache --virtual .gettext gettext \
     && mv /usr/bin/envsubst /tmp/ \
     && runDeps="$( \
-        scanelf --needed --nobanner /usr/sbin/nginx /usr/local/nginx/modules/*.so /tmp/envsubst \
+        scanelf --needed --nobanner /usr/sbin/nginx /usr/local/nginx/modules/*.so /usr/local/luajit/lib/*.so.2 /tmp/envsubst \
             | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
             | sort -u \
             | xargs -r apk info --installed \
