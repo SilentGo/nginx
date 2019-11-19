@@ -49,6 +49,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
         --with-ld-opt='-L/usr/local/lib' \
         --add-module=/tmp/ngx_http_geoip2_module \
         --add-module=/tmp/nginx-module-vts \
+        --add-module=/tmp/nginx_upstream_check_module \
     " \
     && apk add --no-cache --virtual .build-deps \
         gcc \
@@ -73,6 +74,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && git clone --recursive https://github.com/maxmind/libmaxminddb.git /tmp/libmaxminddb \
     && git clone --recursive https://github.com/leev/ngx_http_geoip2_module.git /tmp/ngx_http_geoip2_module \
     && git clone https://github.com/vozlt/nginx-module-vts.git /tmp/nginx-module-vts \
+    && git clone https://github.com/yaoweibin/nginx_upstream_check_module.git /tmp/nginx_upstream_check_module \
     && export GNUPGHOME="$(mktemp -d)" \
     && found=''; \
     for server in \
@@ -95,9 +97,10 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && ./configure \
     && make -j$(getconf _NPROCESSORS_ONLN) \
     && make install \
-    && cd /tmp \
+    && cd /tmp/ \
     && tar -xf nginx.tar.gz \
     && cd /tmp/nginx-$NGINX_VERSION \
+    && patch -p1 < /tmp/nginx_upstream_check_module/check_1.16.1+.patch \
     && ./configure $CONFIG \
     && make -j$(getconf _NPROCESSORS_ONLN) \
     && make install \
