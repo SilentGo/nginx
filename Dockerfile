@@ -55,7 +55,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
         --add-module=/tmp/nginx_upstream_check_module \
         --add-module=/tmp/ngx_devel_kit-0.3.1 \
         --add-module=/tmp/lua-nginx-module-0.10.15 \
-        --add-module=/tmp/ngx_http_proxy_connect_module \
     " \
     && apk add --no-cache --virtual .build-deps \
         gcc \
@@ -84,7 +83,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && git clone https://github.com/vozlt/nginx-module-vts.git /tmp/nginx-module-vts \
     && git clone https://github.com/yaoweibin/nginx_upstream_check_module.git /tmp/nginx_upstream_check_module \
     && git clone https://github.com/openresty/luajit2.git /tmp/luajit2 \
-    && git clone https://github.com/chobits/ngx_http_proxy_connect_module.git /tmp/ngx_http_proxy_connect_module \
     && export GNUPGHOME="$(mktemp -d)" \
     && found=''; \
     for server in \
@@ -113,7 +111,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && cd /tmp && tar -xf nginx.tar.gz \
     && cd /tmp/nginx-$NGINX_VERSION \
     && patch -p1 < /tmp/nginx_upstream_check_module/check_1.16.1+.patch \
-    && patch -p1 < /tmp/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_101504.patch \
     && ./configure $CONFIG \
     && make -j$(getconf _NPROCESSORS_ONLN) \
     && make install \
