@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  nginx:
+    image: dockss911/nginx:v1
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./conf/nginx.conf/:/usr/local/nginx/conf/nginx.conf
+      - ./conf/vhosts:/usr/local/nginx/conf/vhosts
+      - ./GeoLite2-City.mmdb:/usr/local/nginx/conf/GeoLite2-City.mmdb
+      - ./logs:/usr/local/nginx/logs
+    container_name: nginx

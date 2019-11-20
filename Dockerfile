@@ -5,7 +5,7 @@ MAINTAINER liuz "llzmac@163.com"
 ENV NGINX_VERSION 1.17.5
 ENV LUAJIT_LIB=/usr/local/luajit/lib
 ENV LUAJIT_INC=/usr/local/luajit/include/luajit-2.1
-
+    
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && CONFIG="\
         --prefix=/usr/local/nginx \
@@ -76,13 +76,13 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
     && curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o /tmp/nginx.tar.gz \
     && curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o /tmp/nginx.tar.gz.asc \
-    && curl -fSL http://luajit.org/download/LuaJIT-2.1.0-beta2.tar.gz  -o /tmp/LuaJIT-2.1.0-beta2.tar.gz \
     && curl -fSL https://github.com/simpl/ngx_devel_kit/archive/v0.3.1.tar.gz  -o /tmp/v0.3.1.tar.gz \
     && curl -fSL https://github.com/openresty/lua-nginx-module/archive/v0.10.15.tar.gz  -o /tmp/v0.10.15.tar.gz \
     && git clone --recursive https://github.com/maxmind/libmaxminddb.git /tmp/libmaxminddb \
     && git clone --recursive https://github.com/leev/ngx_http_geoip2_module.git /tmp/ngx_http_geoip2_module \
     && git clone https://github.com/vozlt/nginx-module-vts.git /tmp/nginx-module-vts \
     && git clone https://github.com/yaoweibin/nginx_upstream_check_module.git /tmp/nginx_upstream_check_module \
+    && git clone https://github.com/openresty/luajit2.git /tmp/luajit2 \
     && export GNUPGHOME="$(mktemp -d)" \
     && found=''; \
     for server in \
@@ -105,8 +105,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     && ./configure \
     && make -j$(getconf _NPROCESSORS_ONLN) \
     && make install \
-    && cd /tmp && tar -xf LuaJIT-2.1.0-beta2.tar.gz && cd LuaJIT-2.1.0-beta2 \
-    && make PREFIX=/usr/local/luajit && make install PREFIX=/usr/local/luajit \
+    && cd /tmp/luajit2 && make PREFIX=/usr/local/luajit && make install PREFIX=/usr/local/luajit \
     && cd /tmp && tar -xf v0.3.1.tar.gz \
     && cd /tmp && tar -xf v0.10.15.tar.gz \
     && cd /tmp && tar -xf nginx.tar.gz \
